@@ -7,7 +7,6 @@ COUNT=0
 
 echo "Generating nginx.conf..."
 
-# Start the base nginx config with a universal rewrite to strip trailing slashes and keep port
 cat > $NGINX_CONF <<EOF
 worker_processes 1;
 
@@ -23,6 +22,10 @@ http {
 
     server {
         listen 80;
+        listen 443 ssl;
+
+        ssl_certificate     /etc/nginx/certs/dev.crt;
+        ssl_certificate_key /etc/nginx/certs/dev.key;
 
         # Global: remove trailing slash on ANY url, preserve port
         if (\$request_uri ~ ^(.+)/+$) {
@@ -30,7 +33,6 @@ http {
         }
 EOF
 
-# For each API, install requirements and add nginx location block
 for dir in ./*-api; do
     if [ -d "$dir" ]; then
         echo "Processing $dir"
@@ -58,13 +60,11 @@ EOF
     fi
 done
 
-# Close the nginx config
 cat >> $NGINX_CONF <<EOF
     }
 }
 EOF
 
-# Start nginx
 echo "Starting nginx with generated config..."
 nginx
 
